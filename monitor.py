@@ -46,7 +46,7 @@ class ChromeExtensionCommunication:
             game_monitor.send_message(message)
 
 def main():
-    version = "1.0"
+    version = "1.0.1"
 
     # Launch other process (exe if Game Monitor has been compiled, python file otherwise)
     if getattr(sys, 'frozen', False):

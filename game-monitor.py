@@ -76,6 +76,8 @@ class GameMonitor:
                                     logger.debug(scan_entry['name'] + ': ' + start_from + ' variable not found')
                                     continue # Skipping if invalid variable name was given for this scan_entry
                                 address = self.variables[start_from]
+                            elif start_from_type == 'static':
+                                address = start_from
                         
                         if 'aob' in scan_entry:
                             bytesArr = bytes.fromhex(scan_entry['aob'].replace('.', '2E'))
@@ -124,10 +126,10 @@ class GameMonitor:
                     elif val_type == 'string':
                         result = self.pm.read_string(address, scan_entry['length'])
                     elif val_type == 'bytes':
-                        result = self.pm.read_bytes(address, scan_entry['length'])
+                        result = int.from_bytes(self.pm.read_bytes(address, scan_entry['length']), 'big')
                     if 'result' not in scan_entry or result != scan_entry['result']:
                         scan_entry['result'] = result
-                        logger.debug(name + ': Value ' + str(result) + ' (' + hex(result) + ')')
+                        logger.debug(name + ': Value ' + str(result))
                         changed = True
 
                     # If something changed notify the other process so it can send the data to the XToys Chrome extension
