@@ -1,0 +1,9 @@
+{
+  "name": "app.xtoys.gamemonitor",
+  "description": "XToys Game Monitor",
+  "path": "start-monitor.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://hhddbheipffnedlmnefnkjeplkgbajij/"
+  ]
+}
