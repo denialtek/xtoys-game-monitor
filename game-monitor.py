@@ -6,6 +6,9 @@ from multiprocessing.connection import Client
 from elevate import elevate
 import logging
 import traceback
+import string
+import win32api
+import win32con
 
 # This file must be run as admin so that it has permission to read process memory
 elevate(show_console=False)
@@ -159,20 +162,31 @@ class Communication:
         
         logger = logging.getLogger('xtoys')
 
-        while True:
-            message = self.conn.recv()
-            logger.debug('Message from XToys: ' + message)
-            json_data = json.loads(message)
-            action = json_data['action']
-            if action == 'set_name':
-                # If XToys asked to change games, clear existing process monitor
-                if 'name' in state and state['name'] != json_data['name']:
-                    game_monitor.pm = None
-                    state['game_active'] = False
-                state['name'] = json_data['name']
-            elif action == 'set_scan_entry':
-                name = json_data['name']
-                state['scan_data'][name] = json_data['scan_data']
+        try:
+            while True:
+                message = self.conn.recv()
+                logger.debug('Message from XToys: ' + message)
+                json_data = json.loads(message)
+                action = json_data['action']
+                if action == 'set_name':
+                    # If XToys asked to change games, clear existing process monitor
+                    if 'name' in state and state['name'] != json_data['name']:
+                        game_monitor.pm = None
+                        state['game_active'] = False
+                    # Some sanitiziation to remove invalid characters from the filename XToys sent Game Monitor
+                    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+                    pending_name = ''.join(c for c in json_data['name'] if c in valid_chars)
+                    self.request_permission(pending_name, state)
+                elif action == 'set_scan_entry':
+                    name = json_data['name']
+                    state['scan_data'][name] = json_data['scan_data']
+        except Exception:
+            logger.debug(traceback.format_exc())
+    
+    def request_permission(self, game_name, state):
+        choice = win32api.MessageBox(None, 'XToys is requesting to monitor ' + game_name + '. Allow access?', 'Permission Request', win32con.MB_YESNO | win32con.MB_ICONQUESTION | win32con.MB_SYSTEMMODAL)
+        if choice == win32con.IDYES:
+            state['name'] = game_name
 
 def main():
     state = {
